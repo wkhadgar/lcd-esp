@@ -3,11 +3,11 @@
 #include <NTPClient.h>               
 #include <TimeLib.h>                 
 #include <LiquidCrystal.h>  
-const int RS = D6, EN = D5, lcD4 = D1, lcD5 = D2, lcD6 = D3, lcD7 = D4, LEFT = D0;
+const int RS = D6, EN = D5, lcD4 = D1, lcD5 = D2, lcD6 = D3, lcD7 = D4, LEFT = D0, SELECT = 3, RIGHT = 1;
 LiquidCrystal lcd(RS, EN, lcD4, lcD5, lcD6, lcD7);
 
 char ssid[] = "adalovelace";  //wifi ssid
-char password[] = "geladotincando";   //wifi password
+char password[] = "geladotrincando";   //wifi password
 
 WiFiUDP ntpUDP;
 
@@ -23,11 +23,11 @@ int yyyy;
 
 void setup() {
 
-  // pinMode(LEFT, INPUT_PULLDOWN);
-  // pinMode(OK, INPUT_PULLDOWN);
-  // pinMode(RIGHT, INPUT_PULLDOWN);
+  pinMode(LEFT, INPUT_PULLDOWN_16);
+  pinMode(OK, INPUT_PULLDOWN_16);
+  pinMode(RIGHT, INPUT_PULLDOWN_16);
 
-  char l1_fixed[] = "Conectando:";
+  char l1_fixed[] = "";
   Serial.begin(115200);
   lcd.begin(16, 2);                 // Initialize 16x2 LCD Display
   lcd.clear();
@@ -94,9 +94,9 @@ void loop() {
     mm  = month(unix_epoch);
     yyyy   = year(unix_epoch);
 
- 
 
     Time[13] = sec % 10 + 48;
+    if (digitalRead(SELECT)) Time[13] = 0;
     Time[12] = sec / 10 + 48;
     Time[10]  = minutes % 10 + 48;
     Time[9]  = minutes / 10 + 48;
