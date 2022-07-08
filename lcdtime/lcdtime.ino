@@ -3,11 +3,11 @@
 #include <NTPClient.h>               
 #include <TimeLib.h>                 
 #include <LiquidCrystal.h>  
-const int RS = D6, EN = D5, lcD4 = D1, lcD5 = D2, lcD6 = D3, lcD7 = D4;   
+const int RS = D6, EN = D5, lcD4 = D1, lcD5 = D2, lcD6 = D3, lcD7 = D4, LEFT = D0;
 LiquidCrystal lcd(RS, EN, lcD4, lcD5, lcD6, lcD7);
 
-char ssid[] = "rede";  //wifi ssid
-char password[] = "senha";   //wifi password
+char ssid[] = "adalovelace";  //wifi ssid
+char password[] = "geladotincando";   //wifi password
 
 WiFiUDP ntpUDP;
 
@@ -22,7 +22,12 @@ int yyyy;
 
 
 void setup() {
-  int bar = 0;
+
+  // pinMode(LEFT, INPUT_PULLDOWN);
+  // pinMode(OK, INPUT_PULLDOWN);
+  // pinMode(RIGHT, INPUT_PULLDOWN);
+
+  char l1_fixed[] = "Conectando:";
   Serial.begin(115200);
   lcd.begin(16, 2);                 // Initialize 16x2 LCD Display
   lcd.clear();
@@ -34,7 +39,7 @@ void setup() {
   delay(800);
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Conectando:");
+  lcd.print(l1_fixed);
   lcd.print(ssid);
   Serial.println();
   Serial.print("Conectando: ");
@@ -46,12 +51,23 @@ void setup() {
 
   byte full_block[8] = {0b11111, 0b11111, 0b11111, 0b11111, 0b11111, 0b11111, 0b11111, 0b11111};
   lcd.createChar(0, full_block);
+  int bar, name_offset, c = 0;
+  int ssid_size = sizeof(ssid)/sizeof(char);
+  int l1_fixed_size = sizeof(l1_fixed)/sizeof(char);
+
   while ( WiFi.status() != WL_CONNECTED ) {
     Serial.print(".");
+
+    //Serial.println(name_offset);
+    lcd.setCursor(l1_fixed_size-1, 0); //ssid name start
+    name_offset %= ssid_size-(16-l1_fixed_size)-1;
+    if (++c%2) lcd.print(ssid+name_offset++);
+    
     bar %= 10;
     lcd.setCursor(6+bar, 1);
     if (!bar++) lcd.print(":          ");
     else lcd.write(byte(0));
+    
     delay(400);
   }
   lcd.setCursor(7, 1);
