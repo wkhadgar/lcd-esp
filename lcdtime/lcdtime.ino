@@ -6,8 +6,8 @@
 LiquidCrystal lcd(D6, D5, D1, D2, D3, D4); 
 
 
-char ssid[] = "adalovelace";  //wifi ssid
-char password[] = "geladotrincando";   //wifi password
+char ssid[] = "rede";  //wifi ssid
+char password[] = "senha";   //wifi password
 
 WiFiUDP ntpUDP;
 
