@@ -3,8 +3,8 @@
 #include <NTPClient.h>               
 #include <TimeLib.h>                 
 #include <LiquidCrystal.h>  
-LiquidCrystal lcd(D6, D5, D1, D2, D3, D4); 
-
+const int RS = D6, EN = D5, lcD4 = D1, lcD5 = D2, lcD6 = D3, lcD7 = D4;   
+LiquidCrystal lcd(RS, EN, lcD4, lcD5, lcD6, lcD7);
 
 char ssid[] = "rede";  //wifi ssid
 char password[] = "senha";   //wifi password
