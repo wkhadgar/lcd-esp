@@ -16,7 +16,7 @@ byte full_block[8] = {B11111, B11111, B11111, B11111, B11111, B11111, B11111, B1
 byte dynamic_block[8];
 
 const short int menu_size = 5;
-//menu options (limited to size)
+//menu options (limited to given size)
 char option_1[] = "OPTION 1";
 char option_2[] = "Option 2";
 char option_3[] = "OPTION 3";
