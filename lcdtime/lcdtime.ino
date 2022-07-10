@@ -3,11 +3,20 @@
 #include <NTPClient.h>               
 #include <TimeLib.h>                 
 #include <LiquidCrystal.h>  
-const int RS = D6, EN = D5, lcD4 = D1, lcD5 = D2, lcD6 = D3, lcD7 = D4, LEFT = D0, SELECT = 3, RIGHT = 1;
+#define RS D6
+#define EN D8
+#define lcD4 D1
+#define lcD5 D2
+#define lcD6 D3
+#define lcD7 D4
+#define LEFT D0
+#define SELECT D7
+#define RIGHT D5
+
 LiquidCrystal lcd(RS, EN, lcD4, lcD5, lcD6, lcD7);
 
-char ssid[] = "adalovelace";  //wifi ssid
-char password[] = "geladotrincando";   //wifi password
+char ssid[] = "Paulo 2G";  //wifi ssid
+char password[] = "10324966";   //wifi password
 
 WiFiUDP ntpUDP;
 
@@ -24,8 +33,8 @@ int yyyy;
 void setup() {
 
   pinMode(LEFT, INPUT_PULLDOWN_16);
-  pinMode(OK, INPUT_PULLDOWN_16);
-  pinMode(RIGHT, INPUT_PULLDOWN_16);
+  pinMode(SELECT, INPUT);
+  pinMode(RIGHT, INPUT);
 
   char l1_fixed[] = "";
   Serial.begin(115200);
@@ -94,9 +103,7 @@ void loop() {
     mm  = month(unix_epoch);
     yyyy   = year(unix_epoch);
 
-
     Time[13] = sec % 10 + 48;
-    if (digitalRead(SELECT)) Time[13] = 0;
     Time[12] = sec / 10 + 48;
     Time[10]  = minutes % 10 + 48;
     Time[9]  = minutes / 10 + 48;
@@ -112,8 +119,8 @@ void loop() {
     Date[14] = (yyyy / 10) % 10 + 48;
     Date[15] = yyyy % 10 % 10 + 48;
 
-    Serial.println(Time);
-    Serial.println(Date);
+    //Serial.println(Time);
+    //Serial.println(Date);
 
     lcd.setCursor(0, 0);
     lcd.print(Time);
@@ -122,5 +129,13 @@ void loop() {
     last_second = sec;
 
   }
-  delay(500);
+  if (digitalRead(LEFT)) Serial.println(-1);
+  else if (digitalRead(SELECT)) {
+    Serial.println(0);
+    lcd.setCursor(0, 1);
+    lcd.print("!!!!SELECTED!!!!");
+  }
+  else if (digitalRead(RIGHT)) Serial.println(1);
+  else Serial.println(0.5);
+  delay(10);
 }
