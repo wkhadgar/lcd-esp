@@ -26,7 +26,8 @@ char* menu[menu_size] = {option_1, option_2, option_3, option_4, option_5};
 
 bool arrow_low = 0;
 short int menu_pos = 0;
-short int cursor_pos;
+short int current_selection = 0;
+short int cursor_pos = 0;
 
 void setup()    {
     lcd.begin(16, 2);      
@@ -76,6 +77,7 @@ void loop()     {
         menu_pos = menu_size-2;
     }
 
+    current_selection = menu_pos+arrow_low;
     cursor_pos = 0;
     
     if (!arrow_low) {lcd.setCursor(cursor_pos, 1); lcd.print(" "); lcd.setCursor(cursor_pos++, 0); lcd.write(byte(0));} //arrow print
