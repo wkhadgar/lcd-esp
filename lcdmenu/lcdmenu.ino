@@ -11,11 +11,11 @@
 
 LiquidCrystal lcd(lcdRS, lcdEN, lcD4, lcD5, lcD6, lcD7);
 
-byte arrow[8] = {B00000, B10000, B11000, B11100, B11000, B10000, B00000, B00000};
-byte full_block[8] = {B11111, B11111, B11111, B11111, B11111, B11111, B11111, B11111};
+byte arrow[8] = {B00000, B10000, B11000, B11100, B11000, B10000, B00000, B00000}; //setinha
+byte full_block[8] = {B11111, B11111, B11111, B11111, B11111, B11111, B11111, B11111}; //referencia pro load
 byte dynamic_block[8];
 
-const short int menu_size = 5;
+const unsigned char menu_size = 5;
 //menu options (limited to given size)
 char option_1[] = "OPTION 1";
 char option_2[] = "Option 2";
@@ -25,9 +25,9 @@ char option_5[] = "OPTION 5";
 char* menu[menu_size] = {option_1, option_2, option_3, option_4, option_5};
 
 bool arrow_low = 0;
-short int menu_pos = 0;
-short int current_selection = 0;
-short int cursor_pos = 0;
+unsigned char menu_pos = 0;
+unsigned char current_selection = 0;
+unsigned char cursor_pos = 0;
 
 void setup()    {
     lcd.begin(16, 2);      
@@ -42,8 +42,8 @@ void setup()    {
     lcd.print(" Iniciando Menu");
 
     //aesthetic smooth fake load 
-    for (int p = 0; p < 16; p++)    {
-            for (int i = 0; i < 5; i++) {
+    for (unsigned char p = 0; p < 16; p++)    {
+            for (unsigned char i = 0; i < 5; i++) {
             shift_bits(full_block, dynamic_block, 5-i);
             lcd.createChar(1, dynamic_block);
             lcd.setCursor(p, 1);
@@ -60,13 +60,13 @@ void loop()     {
     //menu movement
     if (digitalRead(LEFT))  {
         if (arrow_low) arrow_low = !arrow_low;
-        else menu_pos--;
+        else menu_pos<1?menu_pos=0:menu_pos--; //guard for unsigned assignment
         while (digitalRead(LEFT)); //button realease wait
     }
     else if (digitalRead(RIGHT)) {
         if (!arrow_low) arrow_low = !arrow_low;
         else menu_pos++;
-        while (digitalRead(RIGHT)); //button realease wait
+        while (digitalRead(RIGHT)); //button realease waits
     }
 
     //menu movement limits
@@ -88,8 +88,8 @@ void loop()     {
 
 };
 
-void shift_bits(byte* source, byte* dest, int shift) {
-    for (int i = 0; i < 8; i++) {
+void shift_bits(byte* source, byte* dest, unsigned char shift) {
+    for (unsigned char i = 0; i < 8; i++) {
         dest[i] = source[i] << shift; 
     }
     return;
