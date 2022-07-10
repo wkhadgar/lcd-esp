@@ -34,6 +34,7 @@ void setup()    {
     lcd.clear();
     lcd.createChar(0, arrow);
 
+    //botoes aqui temporarios e em pulldown externo
     pinMode(LEFT, INPUT);
     pinMode(RIGHT, INPUT);
     pinMode(SELECT, INPUT);
@@ -42,7 +43,7 @@ void setup()    {
     lcd.print(" Iniciando Menu");
 
     //aesthetic smooth fake load 
-    for (unsigned char p = 0; p < 16; p++)    {
+    for (unsigned char p = 1; p < 15; p++)    {
             for (unsigned char i = 0; i < 5; i++) {
             shift_bits(full_block, dynamic_block, 5-i);
             lcd.createChar(1, dynamic_block);
