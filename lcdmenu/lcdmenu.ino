@@ -11,20 +11,24 @@
 
 LiquidCrystal lcd(lcdRS, lcdEN, lcD4, lcD5, lcD6, lcD7);
 
-byte arrow[8] = {B00000, B10000, B11000, B11100, B11000, B10000, B00000, B00000}; //setinha
 byte full_block[8] = {B11111, B11111, B11111, B11111, B11111, B11111, B11111, B11111}; //referencia pro load
+byte arrow[8] = {B00000, B10000, B11000, B11100, B11000, B10000, B00000, B00000}; //setinha
+byte done[8] = {B00000, B00000, B00001, B00011, B10110, B11100, B01000, B00000}; //ok
 byte dynamic_block[8];
 
-const unsigned char menu_size = 5;
 //menu options (limited to given size)
-char option_1[] = "OPTION 1";
+const unsigned char menu_size = 5;
+char option_1[] = "OPTION 1"; 
 char option_2[] = "Option 2";
 char option_3[] = "OPTION 3";
 char option_4[] = "Option 4";
 char option_5[] = "OPTION 5";
+short int menu_op_value[menu_size] = {0};
+short int value_preview = 0;
 char* menu[menu_size] = {option_1, option_2, option_3, option_4, option_5};
 
-bool arrow_low = 0;
+bool on_menu = 1;
+bool is_arrow_down = 0;
 unsigned char menu_pos = 0;
 unsigned char current_selection = 0;
 unsigned char cursor_pos = 0;
@@ -33,6 +37,7 @@ void setup()    {
     lcd.begin(16, 2);      
     lcd.clear();
     lcd.createChar(0, arrow);
+    lcd.createChar(2, done);
 
     //botoes aqui temporarios e em pulldown externo
     pinMode(LEFT, INPUT);
@@ -42,10 +47,10 @@ void setup()    {
     lcd.setCursor(0, 0);
     lcd.print(" Iniciando Menu");
 
-    //aesthetic smooth fake load 
+    //fake load suave estetico
     for (unsigned char p = 1; p < 15; p++)    {
             for (unsigned char i = 0; i < 5; i++) {
-            shift_bits(full_block, dynamic_block, 5-i);
+            shift_bits(full_block, dynamic_block, 5-i, 0);
             lcd.createChar(1, dynamic_block);
             lcd.setCursor(p, 1);
             lcd.write(byte(1)); 
@@ -59,39 +64,83 @@ void setup()    {
 
 void loop()     {
     //menu movement
-    if (digitalRead(LEFT))  {
-        if (arrow_low) arrow_low = !arrow_low;
-        else menu_pos<1?menu_pos=0:menu_pos--; //guard for unsigned assignment
-        while (digitalRead(LEFT)); //button realease wait
+    if (on_menu)    {
+        if (digitalRead(LEFT))  { //up pressionado
+            if (is_arrow_down) is_arrow_down = !is_arrow_down;
+            else !menu_pos?:menu_pos--; //guard pra signed assignment e limite superior do menu
+            while (digitalRead(LEFT)) delay(50); //espera do botao
+        }
+        else if (digitalRead(RIGHT)) { //down pressionado
+            if (!is_arrow_down) is_arrow_down = !is_arrow_down;
+            else menu_pos++;
+            while (digitalRead(RIGHT)) delay(50); 
+        }
+
+        //menu movement limit
+        if (is_arrow_down && menu_pos > menu_size-2) {
+            menu_pos = menu_size-2;
+        }
     }
-    else if (digitalRead(RIGHT)) {
-        if (!arrow_low) arrow_low = !arrow_low;
-        else menu_pos++;
-        while (digitalRead(RIGHT)); //button realease waits
+    else    {
+        if (digitalRead(LEFT))    {
+            value_preview--;
+            delay(150);
+        }
+        else if (digitalRead(RIGHT)) {
+            value_preview++;
+            delay(150);
+        }
     }
 
-    //menu movement limits
-    if (!arrow_low && menu_pos < 0) {
-        menu_pos = 0;
-    }
-    else if (arrow_low && menu_pos > menu_size-2) {
-        menu_pos = menu_size-2;
-    }
-
-    current_selection = menu_pos+arrow_low;
+    current_selection = menu_pos+is_arrow_down; //qual option ta selecionada agora
     cursor_pos = 0;
     
-    if (!arrow_low) {lcd.setCursor(cursor_pos, 1); lcd.print(" "); lcd.setCursor(cursor_pos++, 0); lcd.write(byte(0));} //arrow print
-    else {lcd.setCursor(cursor_pos, 0); lcd.print(" "); lcd.setCursor(cursor_pos++, 1); lcd.write(byte(0));}
+    if (on_menu)    {
+        if (!is_arrow_down) {lcd.setCursor(cursor_pos, 1); lcd.print(" "); lcd.setCursor(cursor_pos++, 0); lcd.write(byte(0));} //arrow print
+        else {lcd.setCursor(cursor_pos, 0); lcd.print(" "); lcd.setCursor(cursor_pos++, 1); lcd.write(byte(0));}
 
-    lcd.setCursor(cursor_pos, 0); lcd.print(menu[menu_pos]);
-    lcd.setCursor(cursor_pos, 1); lcd.print(menu[menu_pos + 1]);
+        lcd.setCursor(cursor_pos, 0); lcd.print(menu[menu_pos]); lcd.print(" : "); lcd.print(menu_op_value[menu_pos]); lcd.print("        "); //linha 1 print
+        lcd.setCursor(cursor_pos, 1); lcd.print(menu[menu_pos + 1]); lcd.print(" : "); lcd.print(menu_op_value[menu_pos + 1]); lcd.print("        "); //linha 2 print
+
+        if (digitalRead(SELECT))    { //selecionou alguma op do menu principal
+            shift_bits(arrow, dynamic_block, 0, 0); //salva o arrow original no bloco dinamico
+            shift_bits(dynamic_block, arrow, 2, 1); //seta anda pra direita 2 bit
+            lcd.createChar(0, arrow); //seta na memoria
+            
+            while (digitalRead(SELECT)) delay(50); //espera soltar
+            shift_bits(dynamic_block, arrow, 0, 0); //volta ao normal
+            lcd.createChar(0, arrow); //set
+
+            on_menu = !on_menu;
+            value_preview = menu_op_value[current_selection];
+        }
+    }
+    else { //sub-menu de modificar valores
+        lcd.setCursor(cursor_pos, 0); lcd.print("Mod "); lcd.print(menu[menu_pos+is_arrow_down]); lcd.print("       ");//linha 1 print
+        lcd.setCursor(cursor_pos, 1); lcd.write(byte(0)); lcd.print("      "); lcd.print(value_preview); lcd.print("        "); //linha 2 print
+
+        if (digitalRead(SELECT))    {
+            menu_op_value[current_selection] = value_preview; //salva a config
+            lcd.setCursor(cursor_pos, 1); lcd.write(byte(2)); //da o simbolo de ok;
+            while (digitalRead(SELECT)) delay(50);
+            
+            on_menu = !on_menu; //sai do sub-menu
+        }
+    }
+        
 
 };
 
-void shift_bits(byte* source, byte* dest, unsigned char shift) {
-    for (unsigned char i = 0; i < 8; i++) {
-        dest[i] = source[i] << shift; 
+void shift_bits(byte* source, byte* dest, unsigned char shift, bool right) {
+    if (!right) {
+        for (unsigned char i = 0; i < 8; i++) {
+           dest[i] = source[i] << shift; 
+        }
+    }
+    else {
+        for (unsigned char i = 0; i < 8; i++) {
+           dest[i] = source[i] >> shift; 
+        }
     }
     return;
 }
