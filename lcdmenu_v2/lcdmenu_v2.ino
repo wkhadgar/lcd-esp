@@ -1,6 +1,6 @@
 /*
-Versão 1
-Usando 3 botões  em pulldown
+Versão 2
+Usando um rotary encoder no lugar dos 3 botões, ainda em pulldown
 */
 
 #include <LiquidCrystal.h>
@@ -11,9 +11,9 @@ Usando 3 botões  em pulldown
 #define lcD6 D3
 #define lcD7 D4
 #define lcdBrightness_pin 3 //RX PWM
-#define LEFT D0
-#define SELECT D7
-#define RIGHT D5
+#define LEFT D7
+#define SELECT D5
+#define RIGHT D0
 
 LiquidCrystal lcd(lcdRS, lcdEN, lcD4, lcD5, lcD6, lcD7);
 
@@ -38,6 +38,7 @@ bool is_arrow_down = 0;
 unsigned char menu_pos = 0;
 unsigned char current_selection = 0;
 unsigned char cursor_pos = 0;
+bool act_state, last_state = false;
 
 void setup()    {
     lcd.begin(16, 2);      
@@ -49,7 +50,7 @@ void setup()    {
     pinMode(lcdBrightness_pin, OUTPUT);
     menu_op_value[4] = 5;
     analogWrite(lcdBrightness_pin, menu_op_value[4]);
-    //botoes aqui temporarios e em pulldown externo
+    //entrdas do rotary encoder
     pinMode(LEFT, INPUT);
     pinMode(RIGHT, INPUT);
     pinMode(SELECT, INPUT);
@@ -70,36 +71,38 @@ void setup()    {
         lcd.write(byte(255));
     }
     lcd.clear();
+    last_state = digitalRead(LEFT);
 }
 
 void loop()     {
+    act_state = digitalRead(LEFT);
     //menu movement
     if (on_menu)    {
-        if (digitalRead(LEFT))  { //up pressionado
-            if (is_arrow_down) is_arrow_down = !is_arrow_down;
-            else !menu_pos?:menu_pos--; //guard pra signed assignment e limite superior do menu
-            while (digitalRead(LEFT)) delay(50); //espera do botao
-        }
-        else if (digitalRead(RIGHT)) { //down pressionado
-            if (!is_arrow_down) is_arrow_down = !is_arrow_down;
-            else menu_pos++;
-            while (digitalRead(RIGHT)) delay(50); 
+        if ((act_state!=last_state) & act_state)  {
+            if (!digitalRead(RIGHT)) { //anti horario
+                if (is_arrow_down) is_arrow_down = !is_arrow_down;
+                else !menu_pos?:menu_pos--; //guard pra signed assignment e limite superior do menu
+            }
+            else { //horario
+                if (!is_arrow_down) is_arrow_down = !is_arrow_down;
+                else (menu_pos>(menu_size-3))?:menu_pos++;
+            }
         }
 
-        //menu movement limit
-        if (is_arrow_down && menu_pos > menu_size-2) {
-            menu_pos = menu_size-2;
-        }
+        last_state = act_state; //remember the change (if there was one)
     }
+    //value changing
     else    {
-        if (digitalRead(LEFT))    {
-            value_preview--;
-            delay(100); //modify value slowness
+        if ((act_state!=last_state) & act_state)    {
+            if (!digitalRead(RIGHT))   {
+                value_preview--;
+            }
+            else {
+                value_preview+=5;
+            }
         }
-        else if (digitalRead(RIGHT)) {
-            value_preview++;
-            delay(100);
-        }
+
+        last_state = act_state;
     }
 
     current_selection = menu_pos+is_arrow_down; //qual option ta selecionada agora
@@ -117,7 +120,7 @@ void loop()     {
             shift_bits(dynamic_block, arrow, 2, 1); //seta anda pra direita 2 bit
             lcd.createChar(0, arrow); //seta na memoria
             
-            while (digitalRead(SELECT)) delay(50); //espera soltar
+            while (digitalRead(SELECT)) delay(100); //espera soltar
             shift_bits(dynamic_block, arrow, 0, 0); //volta ao normal
             lcd.createChar(0, arrow); //set
 
@@ -139,11 +142,10 @@ void loop()     {
         if (digitalRead(SELECT))    {
             menu_op_value[current_selection] = value_preview; //salva a config
             lcd.setCursor(cursor_pos, 1); lcd.write(byte(2)); //da o simbolo de ok;
-            while (digitalRead(SELECT)) delay(50);
+            while (digitalRead(SELECT)) delay(500);
             on_menu = !on_menu; //sai do sub-menu
         }
     }
-        
 
 };
 
