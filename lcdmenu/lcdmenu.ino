@@ -5,6 +5,7 @@
 #define lcD5 D2
 #define lcD6 D3
 #define lcD7 D4
+#define lcdBrightness_pin 3 //RX PWM
 #define LEFT D0
 #define SELECT D7
 #define RIGHT D5
@@ -18,14 +19,14 @@ byte dynamic_block[8];
 
 //menu options (limited to given size)
 const unsigned char menu_size = 5;
-char option_1[] = "OPTION 1"; 
-char option_2[] = "Option 2";
-char option_3[] = "OPTION 3";
-char option_4[] = "Option 4";
-char option_5[] = "OPTION 5";
+char option_0[] = "OPTION 1"; 
+char option_1[] = "Option 2";
+char option_2[] = "OPTION 3";
+char option_3[] = "Option 4";
+char option_4[] = "Brilho da tela";
 short int menu_op_value[menu_size] = {0};
 short int value_preview = 0;
-char* menu[menu_size] = {option_1, option_2, option_3, option_4, option_5};
+char* menu[menu_size] = {option_0, option_1, option_2, option_3, option_4};
 
 bool on_menu = 1;
 bool is_arrow_down = 0;
@@ -39,6 +40,10 @@ void setup()    {
     lcd.createChar(0, arrow);
     lcd.createChar(2, done);
 
+    pinMode(lcdBrightness_pin, FUNCTION_3);
+    pinMode(lcdBrightness_pin, OUTPUT);
+    menu_op_value[4] = 5;
+    analogWrite(lcdBrightness_pin, menu_op_value[4]);
     //botoes aqui temporarios e em pulldown externo
     pinMode(LEFT, INPUT);
     pinMode(RIGHT, INPUT);
@@ -84,11 +89,11 @@ void loop()     {
     else    {
         if (digitalRead(LEFT))    {
             value_preview--;
-            delay(150);
+            delay(100); //modify value slowness
         }
         else if (digitalRead(RIGHT)) {
             value_preview++;
-            delay(150);
+            delay(100);
         }
     }
 
@@ -116,14 +121,20 @@ void loop()     {
         }
     }
     else { //sub-menu de modificar valores
-        lcd.setCursor(cursor_pos, 0); lcd.print("Mod "); lcd.print(menu[menu_pos+is_arrow_down]); lcd.print("       ");//linha 1 print
+        lcd.setCursor(cursor_pos, 0); lcd.print(" "); lcd.print(menu[menu_pos+is_arrow_down]); lcd.print("       ");//linha 1 print
         lcd.setCursor(cursor_pos, 1); lcd.write(byte(0)); lcd.print("      "); lcd.print(value_preview); lcd.print("        "); //linha 2 print
+
+        if (current_selection == 4) {
+            (value_preview>100)?value_preview=100:(value_preview<0)?value_preview=0:value_preview;
+            menu_op_value[current_selection] = value_preview;
+            analogWrite(lcdBrightness_pin, ((menu_op_value[4]*255)/100));
+            lcd.setCursor(cursor_pos, 1); lcd.write(byte(0)); lcd.print("      "); lcd.print(value_preview); lcd.print("%        "); //linha 2 print
+        }
 
         if (digitalRead(SELECT))    {
             menu_op_value[current_selection] = value_preview; //salva a config
             lcd.setCursor(cursor_pos, 1); lcd.write(byte(2)); //da o simbolo de ok;
             while (digitalRead(SELECT)) delay(50);
-            
             on_menu = !on_menu; //sai do sub-menu
         }
     }
