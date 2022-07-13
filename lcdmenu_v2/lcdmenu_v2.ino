@@ -95,11 +95,10 @@ void loop()     {
     
     if (on_menu)    {
         for (int row = 0; row < LCD_ROWS; row++)  {
-            cursor_pos = 0;
+            lcd.setCursor(0, row)
             if (arrow_pos == row) lcd.write(byte(0));
             else lcd.print(" ");
-            cursor_pos++;
-            lcd.setCursor(cursor_pos, row); lcd.print(menu[menu_pos+row]); lcd.print(" : "); lcd.print(menu_op_value[menu_pos+row]); lcd.print("        "); //linha print
+            lcd.print(menu[menu_pos+row]); lcd.print(" : "); lcd.print(menu_op_value[menu_pos+row]); lcd.print("        "); //linha print
         }
 
         if (digitalRead(SELECT))    { //selecionou alguma op do menu principal
@@ -115,6 +114,7 @@ void loop()     {
             value_preview = menu_op_value[current_selection];
         }
     }
+
     else { //sub-menu de modificar valores
         cursor_pos = 0;
         for (int row = 0; row < LCD_ROWS; row++)  {
