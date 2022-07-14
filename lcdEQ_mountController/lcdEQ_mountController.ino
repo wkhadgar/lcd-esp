@@ -126,18 +126,16 @@ void loop()     {
             switch (current_text_row)   {
                 case 0: { //dec
                     lcd.print(menu[current_text_row]); lcd.print(" : "); lcd.print(menu_op_value[current_text_row]/60); lcd.write(byte(223)); lcd.print(menu_op_value[current_text_row]%60); lcd.print("'");
-                    lcd.setCursor(15, row);
-                    if (auto_mode) lcd.write(byte(4)); 
+                    if (auto_mode) {lcd.setCursor(15, row); lcd.write(byte(4));}
                     else lcd.print("    ");
                 } break;
                 case 1: { //ra
                     lcd.print(menu[current_text_row]); lcd.print(" : "); lcd.print(menu_op_value[current_text_row]/60); lcd.print("h"); lcd.print(menu_op_value[current_text_row]%60); lcd.print("m");
-                    lcd.setCursor(15, row);
-                    if (auto_mode) lcd.write(byte(4));
+                    if (auto_mode) {lcd.setCursor(15, row); lcd.write(byte(4));}
                     else lcd.print("    ");
                 } break;
                 case 2: { //hemisphere
-                    lcd.print(menu[current_text_row]); lcd.print(" : "); menu_op_value[current_text_row]?lcd.print("N    "):lcd.print("S    ");
+                    lcd.print(menu[current_text_row]); lcd.print(": "); menu_op_value[current_text_row]?lcd.print("N    "):lcd.print("S    ");
                 } break;
                 default:    {
                     lcd.print(menu[current_text_row]); lcd.print(" : "); lcd.print(menu_op_value[current_text_row]); lcd.print("        "); //linha print
