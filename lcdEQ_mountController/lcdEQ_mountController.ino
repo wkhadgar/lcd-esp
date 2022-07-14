@@ -75,7 +75,6 @@ void setup()    {
     int stored_brightness = EEPROM.read(0);
     int stored_hemisphere = EEPROM.read(1);
     EEPROM.end();
-    //lcd.print(stored_brightness);
 
     //screen led pwm
     pinMode(lcdBrightness_pin, FUNCTION_3);
@@ -125,13 +124,13 @@ void loop()     {
             else lcd.print(" ");
             switch (current_text_row)   {
                 case 0: { //dec
-                    lcd.print(menu[current_text_row]); lcd.print(" : "); lcd.print(menu_op_value[current_text_row]/60); lcd.write(byte(223)); lcd.print(menu_op_value[current_text_row]%60); lcd.print("'");
-                    if (auto_mode) {lcd.setCursor(15, row); lcd.write(byte(4));}
+                    lcd.print(menu[current_text_row]); lcd.print(" : "); lcd.print(menu_op_value[current_text_row]/60); lcd.write(byte(223)); lcd.print(menu_op_value[current_text_row]%60); lcd.print("'  ");
+                    if (auto_mode) {lcd.setCursor(LCD_COLS-1, row); lcd.write(byte(4));}
                     else lcd.print("    ");
                 } break;
                 case 1: { //ra
-                    lcd.print(menu[current_text_row]); lcd.print(" : "); lcd.print(menu_op_value[current_text_row]/60); lcd.print("h"); lcd.print(menu_op_value[current_text_row]%60); lcd.print("m");
-                    if (auto_mode) {lcd.setCursor(15, row); lcd.write(byte(4));}
+                    lcd.print(menu[current_text_row]); lcd.print(" : "); lcd.print(menu_op_value[current_text_row]/60); lcd.print("h"); lcd.print(menu_op_value[current_text_row]%60); lcd.print("m  ");
+                    if (auto_mode) {lcd.setCursor(LCD_COLS-1, row); lcd.write(byte(4));}
                     else lcd.print("    ");
                 } break;
                 case 2: { //hemisphere
@@ -147,8 +146,8 @@ void loop()     {
             shift_bits(arrow, dynamic_block, 0, 0); //salva o arrow original no bloco dinamico
             shift_bits(dynamic_block, arrow, 2, 1); //seta anda pra direita 2 bit
             lcd.createChar(1, arrow); //seta na memoria
-            
-            while (digitalRead(SELECT)) delay(100); //espera soltar
+            time_last = millis();
+            while (digitalRead(SELECT) || ((millis() - time_last) < 300)); //espera soltar e dá o tempo minimo da animação
             shift_bits(dynamic_block, arrow, 0, 0); //volta ao normal
             lcd.createChar(1, arrow); //set
 
@@ -167,14 +166,14 @@ void loop()     {
             case 0: { //dec
                 if (auto_mode)  (value_preview==lock_value)?:value_preview=lock_value; //lock
                 lcd.setCursor(0, LCD_ROWS-1); lcd.write(byte(1)); lcd.print("     "); lcd.print(value_preview/60); lcd.write(byte(223)); lcd.print(value_preview%60); lcd.print("'   ");
-                lcd.setCursor(15, LCD_ROWS-1);
+                lcd.setCursor(LCD_COLS-1, LCD_ROWS-1);
                 if (auto_mode) lcd.write(byte(4)); 
                 else lcd.print("    ");
             } break;
             case 1: { //right ascendence
                 if (auto_mode)  (value_preview==menu_op_value[1])?:value_preview=menu_op_value[1]; //lock on auto ra
                 lcd.setCursor(0, LCD_ROWS-1); lcd.write(byte(1)); lcd.print("     "); lcd.print(value_preview/60); lcd.print("h"); lcd.print(value_preview%60); lcd.print("m   ");
-                lcd.setCursor(15, LCD_ROWS-1);
+                lcd.setCursor(LCD_COLS-1, LCD_ROWS-1);
                 if (auto_mode) lcd.write(byte(4)); 
                 else lcd.print("    ");
             } break;
@@ -223,9 +222,10 @@ void loop()     {
         }
         
         if (digitalRead(SELECT) && (menu_size-current_selection-1))    { //press sem ser no save
+            last_time = millis();
             menu_op_value[current_selection] = value_preview; //salva o setting
             lcd.setCursor(0, LCD_ROWS-1); lcd.write(byte(2)); //da o simbolo de ok;
-            while (digitalRead(SELECT)) delay(1000);
+            while (digitalRead(SELECT) || ((millis()-last_time) < 1000));
             on_menu = !on_menu; //sai do sub-menu
             if (menu_op_value[3])   {auto_mode = true; time_last = millis();} else auto_mode = false; //inicia o modo automatico
         }
