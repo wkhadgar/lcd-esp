@@ -34,16 +34,15 @@ char option_1[] = "Option 2";
 char option_2[] = "OPTION 3";
 char option_3[] = "Option 4";
 char option_4[] = "Brilho da tela";
-char option_5[] = "Salvar configs";
+char option_5[] = "Salvar configs"; //precisa ser a ultima
 unsigned short int menu_op_value[menu_size] = {0};
 unsigned short int value_preview = 0;
 char* menu[menu_size] = {option_0, option_1, option_2, option_3, option_4, option_5};
 
 bool on_menu = 1;
-unsigned char arrow_pos = 0;
-unsigned char menu_pos = 0;
+unsigned char arrow_row = 0;
+unsigned char menu_top_row = 0;
 unsigned char current_selection = 0;
-unsigned char cursor_pos = 0;
 
 void IRAM_ATTR rotary_IRQ();
 void shift_bits(byte* source, byte* dest, unsigned char shift, bool right);
@@ -53,7 +52,7 @@ void setup()    {
     
     lcd.begin(LCD_COLS, LCD_ROWS);      
     lcd.clear();
-    lcd.createChar(0, arrow); //1 is the dynamic character
+    lcd.createChar(1, arrow); //0 is the dynamic character
     lcd.createChar(2, done);
     lcd.createChar(3, saving);
     lcd.setCursor(0, 0);
@@ -76,11 +75,11 @@ void setup()    {
     
     //fake load suave estetico
     for (unsigned char p = 1; p < LCD_COLS-1; p++)    {
-            for (unsigned char i = 0; i < 5; i++) {
+        for (unsigned char i = 0; i < 5; i++) {
             shift_bits(full_block, dynamic_block, 5-i, 0);
-            lcd.createChar(1, dynamic_block);
-            lcd.setCursor(p, 1);
-            lcd.write(byte(1)); 
+            lcd.createChar(0, dynamic_block);
+            lcd.setCursor(p, 1); //draw over
+            lcd.write(byte(0)); 
             delay(1500/(LCD_COLS*5));   //1.5s = 1500ms/(LCD_COLS*5)
         }
         lcd.setCursor(p, 1);
@@ -91,24 +90,24 @@ void setup()    {
 
 void loop()     {
     //menu movement
-    current_selection = menu_pos+arrow_pos; //qual option ta selecionada agora
+    current_selection = menu_top_row+arrow_row; //qual option ta selecionada agora
     
     if (on_menu)    {
         for (int row = 0; row < LCD_ROWS; row++)  {
-            lcd.setCursor(0, row)
-            if (arrow_pos == row) lcd.write(byte(0));
+            lcd.setCursor(0, row);
+            if (arrow_row == row) lcd.write(byte(1));
             else lcd.print(" ");
-            lcd.print(menu[menu_pos+row]); lcd.print(" : "); lcd.print(menu_op_value[menu_pos+row]); lcd.print("        "); //linha print
+            lcd.print(menu[menu_top_row+row]); lcd.print(" : "); lcd.print(menu_op_value[menu_top_row+row]); lcd.print("        "); //linha print
         }
 
         if (digitalRead(SELECT))    { //selecionou alguma op do menu principal
             shift_bits(arrow, dynamic_block, 0, 0); //salva o arrow original no bloco dinamico
             shift_bits(dynamic_block, arrow, 2, 1); //seta anda pra direita 2 bit
-            lcd.createChar(0, arrow); //seta na memoria
+            lcd.createChar(1, arrow); //seta na memoria
             
             while (digitalRead(SELECT)) delay(100); //espera soltar
             shift_bits(dynamic_block, arrow, 0, 0); //volta ao normal
-            lcd.createChar(0, arrow); //set
+            lcd.createChar(1, arrow); //set
 
             on_menu = !on_menu;
             value_preview = menu_op_value[current_selection];
@@ -116,29 +115,18 @@ void loop()     {
     }
 
     else { //sub-menu de modificar valores
-        cursor_pos = 0;
-        for (int row = 0; row < LCD_ROWS; row++)  {
-            lcd.setCursor(cursor_pos, row);
-            if (row == 0)   {
-                lcd.print(" ");lcd.print(menu[current_selection]);
-            }
-            else if (row == 1) {
-                lcd.write(byte(0)); 
-                lcd.print("      "); lcd.print(value_preview); lcd.print("        ");
-            }
-            else lcd.print("                   ");
-        }
+        lcd.setCursor(0, 0);
+        lcd.print(" "); lcd.print(menu[current_selection]); lcd.print("       "); //titulo submenu
 
         //especific configs
         if (current_selection == 4) { //brightness
             (value_preview>100)?value_preview=100:(value_preview<0)?value_preview=0:value_preview;
             menu_op_value[current_selection] = value_preview;
             analogWrite(lcdBrightness_pin, ((menu_op_value[4]*255)/100));
-            lcd.setCursor(cursor_pos, 1); lcd.print("%"); lcd.print("      "); lcd.print(value_preview); lcd.print("        "); //linha 2 print
+            lcd.setCursor(0, LCD_ROWS-1); lcd.write(byte(1)); lcd.print("      "); lcd.print(value_preview); lcd.print("%        "); //linha 2 print
         }
-
-        if (current_selection == 5) { //save 
-            lcd.setCursor(cursor_pos, 1); lcd.write(byte(3)); lcd.print("  Salvando..."); lcd.print("         "); //linha 2 print
+        else if (current_selection == (menu_size-1)) { //save (ultima op)
+            lcd.setCursor(0, LCD_ROWS-1); lcd.write(byte(3)); lcd.print("  Salvando..."); lcd.print("         "); //linha 2 print
             uint8_t eeprom_value;
             EEPROM.begin(menu_size*2);
             eeprom_value = EEPROM.read(0);
@@ -149,17 +137,27 @@ void loop()     {
             }
 
             EEPROM.end(); delay(500);
-            lcd.setCursor(cursor_pos, 1); lcd.write(byte(2)); //ok
+            lcd.setCursor(0, 1); lcd.write(byte(2)); //ok
             delay(1000);
             on_menu = !on_menu; //sai automaticamente da tela de salvamento
         }
+        else    { //submenu generico
+            for (int row = 1; row < LCD_ROWS; row++)  {
+                lcd.setCursor(0, row);
+                if (row == LCD_ROWS-1){ 
+                    lcd.write(byte(1)); lcd.print("      "); lcd.print(value_preview); lcd.print("        ");
+                }
+                else lcd.print("                  ");
+            }
+        }
         //só entra aqui se não for save config
-        else if (digitalRead(SELECT))    { 
+        if (digitalRead(SELECT) && (menu_size-current_selection-1))    { 
             menu_op_value[current_selection] = value_preview; //salva o setting
-            lcd.setCursor(cursor_pos, 1); lcd.write(byte(2)); //da o simbolo de ok;
+            lcd.setCursor(0, LCD_ROWS-1); lcd.write(byte(2)); //da o simbolo de ok;
             while (digitalRead(SELECT)) delay(1000);
             on_menu = !on_menu; //sai do sub-menu
         }
+            
     }
 
 };
@@ -184,12 +182,12 @@ void IRAM_ATTR rotary_IRQ()   {
     if (on_menu)    {
         if ((interrupt_now - last_Interrupt) > DEBOUNCE_ROTARY_MS)  { //debounce sem delay()
             if (!digitalRead(RIGHT))    { //anti horario
-                if (arrow_pos) arrow_pos--;
-                else !menu_pos?:menu_pos--; //guard pra signed assignment e limite superior do menu
+                if (arrow_row) arrow_row--;
+                else !menu_top_row?:menu_top_row--; //guard pra signed assignment e limite superior do menu
             }
             else    { //horario
-                if (arrow_pos<LCD_ROWS-1) arrow_pos++;
-                else (menu_pos>(menu_size-3))?:menu_pos++;
+                if (arrow_row<LCD_ROWS-1) arrow_row++;
+                else (menu_top_row>(menu_size-3))?:menu_top_row++;
             }
         }
 
