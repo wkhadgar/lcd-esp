@@ -146,8 +146,7 @@ void loop()     {
             shift_bits(arrow, dynamic_block, 0, 0); //salva o arrow original no bloco dinamico
             shift_bits(dynamic_block, arrow, 2, 1); //seta anda pra direita 2 bit
             lcd.createChar(1, arrow); //seta na memoria
-            time_last = millis();
-            while (digitalRead(SELECT) || ((millis() - time_last) < 300)); //espera soltar e dá o tempo minimo da animação
+            while (digitalRead(SELECT)) delay(150); //espera soltar e dá o tempo minimo da animação
             shift_bits(dynamic_block, arrow, 0, 0); //volta ao normal
             lcd.createChar(1, arrow); //set
 
@@ -165,14 +164,14 @@ void loop()     {
         switch (current_selection) {
             case 0: { //dec
                 if (auto_mode)  (value_preview==lock_value)?:value_preview=lock_value; //lock
-                lcd.setCursor(0, LCD_ROWS-1); lcd.write(byte(1)); lcd.print("     "); lcd.print(value_preview/60); lcd.write(byte(223)); lcd.print(value_preview%60); lcd.print("'   ");
+                lcd.setCursor(0, LCD_ROWS-1); lcd.write(byte(1)); lcd.print("     "); lcd.print(value_preview/60); lcd.write(byte(223)); lcd.print(value_preview%60); lcd.print("'    ");
                 lcd.setCursor(LCD_COLS-1, LCD_ROWS-1);
                 if (auto_mode) lcd.write(byte(4)); 
                 else lcd.print("    ");
             } break;
             case 1: { //right ascendence
                 if (auto_mode)  (value_preview==menu_op_value[1])?:value_preview=menu_op_value[1]; //lock on auto ra
-                lcd.setCursor(0, LCD_ROWS-1); lcd.write(byte(1)); lcd.print("     "); lcd.print(value_preview/60); lcd.print("h"); lcd.print(value_preview%60); lcd.print("m   ");
+                lcd.setCursor(0, LCD_ROWS-1); lcd.write(byte(1)); lcd.print("     "); lcd.print(value_preview/60); lcd.print("h"); lcd.print(value_preview%60); lcd.print("m    ");
                 lcd.setCursor(LCD_COLS-1, LCD_ROWS-1);
                 if (auto_mode) lcd.write(byte(4)); 
                 else lcd.print("    ");
@@ -222,10 +221,10 @@ void loop()     {
         }
         
         if (digitalRead(SELECT) && (menu_size-current_selection-1))    { //press sem ser no save
-            last_time = millis();
+            time_last = millis();
             menu_op_value[current_selection] = value_preview; //salva o setting
             lcd.setCursor(0, LCD_ROWS-1); lcd.write(byte(2)); //da o simbolo de ok;
-            while (digitalRead(SELECT) || ((millis()-last_time) < 1000));
+            while (digitalRead(SELECT)) delay(800);
             on_menu = !on_menu; //sai do sub-menu
             if (menu_op_value[3])   {auto_mode = true; time_last = millis();} else auto_mode = false; //inicia o modo automatico
         }
