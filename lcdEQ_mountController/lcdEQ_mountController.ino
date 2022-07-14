@@ -199,14 +199,15 @@ void loop()     {
                 uint8_t hemisphere = menu_op_value[2];
                 if (eeprom_brightness != brightness)   {
                     EEPROM.write(0, brightness);
+                    delay(1000); //simular espera do save
                 }
                 if (eeprom_H != hemisphere) {
                     EEPROM.write(1, hemisphere);
+                    delay(1000); //simular espera do save
                 }
-                delay(2000); //simular espera do save
                 EEPROM.end();
                 lcd.setCursor(0, 1); lcd.write(byte(2)); //ok
-                delay(1000);
+                delay(500);
                 on_menu = !on_menu; //sai automaticamente da tela de salvamento
             } break;  
             default:    { //submenu generico
