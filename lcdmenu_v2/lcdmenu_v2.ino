@@ -88,7 +88,8 @@ void setup()    {
     lcd.clear();
 }
 
-void loop()     {
+void loop()     {  
+    
     //menu movement
     current_selection = menu_top_row+arrow_row; //qual option ta selecionada agora
     
